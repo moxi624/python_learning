@@ -1,4 +1,7 @@
 import math
+'''
+    python函数
+'''
 # python内置了很多有用的函数
 
 #1、 abs()函数，  求绝对值
