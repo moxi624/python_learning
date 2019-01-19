@@ -9,18 +9,13 @@ x0 = torch.normal(2*n_data, 1)      # 类型0 x data (tensor), shape=(100, 2)
 y0 = torch.zeros(100)               # 类型0 y data (tensor), shape=(100, 1)
 x1 = torch.normal(-2*n_data, 1)     # 类型1 x data (tensor), shape=(100, 1)
 y1 = torch.ones(100)                # 类型1 y data (tensor), shape=(100, 1)
-
 # 注意 x, y 数据的数据形式是一定要像下面一样 (torch.cat 是在合并数据)
 x = torch.cat((x0, x1), 0).type(torch.FloatTensor)  # FloatTensor = 32-bit floating
 y = torch.cat((y0, y1), ).type(torch.LongTensor)    # LongTensor = 64-bit integer
 
+
 # plt.scatter(x.data.numpy()[:, 0], x.data.numpy()[:, 1], c=y.data.numpy(), s=100, lw=0, cmap='RdYlGn')
 # plt.show()
-
-# 画图
-plt.scatter(x.data.numpy(), y.data.numpy())
-plt.show()
-
 
 class Net(torch.nn.Module):     # 继承 torch 的 Module
     def __init__(self, n_feature, n_hidden, n_output):
@@ -43,6 +38,7 @@ optimizer = torch.optim.SGD(net.parameters(), lr=0.02)  # 传入 net 的所有�
 # 算误差的时候, 注意真实值!不是! one-hot 形式的, 而是1D Tensor, (batch,)
 # 但是预测值是2D tensor (batch, n_classes)
 loss_func = torch.nn.CrossEntropyLoss()
+plt.ion()   # something about plotting
 
 for t in range(100):
     out = net(x)     # 喂给 net 训练数据 x, 输出分析值
@@ -56,11 +52,11 @@ for t in range(100):
     if t % 2 == 0:
         plt.cla()
         # 过了一道 softmax 的激励函数后的最大概率才是预测值
-        prediction = torch.max(F.softmax(out), 1)[1]
-        pred_y = prediction.data.numpy().squeeze()
+        prediction = torch.max(out, 1)[1]
+        pred_y = prediction.data.numpy()
         target_y = y.data.numpy()
         plt.scatter(x.data.numpy()[:, 0], x.data.numpy()[:, 1], c=pred_y, s=100, lw=0, cmap='RdYlGn')
-        accuracy = sum(pred_y == target_y)/200.  # 预测中有多少和真实值一样
+        accuracy = float((pred_y == target_y).astype(int).sum()) / float(target_y.size)
         plt.text(1.5, -4, 'Accuracy=%.2f' % accuracy, fontdict={'size': 20, 'color':  'red'})
         plt.pause(0.1)
 
