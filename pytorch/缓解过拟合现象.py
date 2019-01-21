@@ -69,6 +69,7 @@ for t in range(500):
     optimizer_ofit.step()
     optimizer_drop.step()
 
+
     if t % 10 == 0:
         # change to eval mode in order to fix drop out effect
         net_overfitting.eval() # 变成预测模式
