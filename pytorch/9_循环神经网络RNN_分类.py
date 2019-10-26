@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 EPOCH = 1               # 训练数据n次，为了节省时间，我们只训练1个epoch
 BATCH_SIZE = 64         # 批训练的数量
 
-# RNN 有TIME_STEP  和  INPUT_SIZE
-TIME_STEP = 28          # rnn time step / image height
+# RNN 有 TIME_STEP  和  INPUT_SIZE
+TIME_STEP = 28          # rnn time step / image height (多少个时间点的数据，一行数据包含28个像素点)
 INPUT_SIZE = 28         # rnn input size / image width
 LR = 0.01               # 学习率
 
@@ -41,6 +41,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=BATCH_
 # convert test data into Variable, pick 2000 samples to speed up testing
 test_data = dsets.MNIST(root='./mnist/', train=False, transform=transforms.ToTensor())
 test_x = test_data.test_data.type(torch.FloatTensor)[:2000]/255.   # shape (2000, 28, 28) value in range(0,1)
+print(test_x)
 test_y = test_data.test_labels.numpy()[:2000]    # covert to numpy array
 
 
@@ -51,11 +52,14 @@ class RNN(nn.Module):
         # 使用LSTM的RNN形式，使用更高级LSTM，能加速收敛
         self.rnn = nn.LSTM(         # if use nn.RNN(), it hardly learns
             input_size=INPUT_SIZE,
-            hidden_size=64,         # rnn hidden unit
+            hidden_size=64,         # 隐藏层大小
             num_layers=1,           # 类似于细胞层数，值越大，效果越好，处理越慢
+
+            # 输入数据的维度 (batch, time_step, input_size) ， 一般是 batch放在第一个，就需要设置True
             batch_first=True,       # input & output will has batch size as 1s dimension. e.g. (batch, time_step, input_size)
         )
 
+        # 对数据进行处理
         self.out = nn.Linear(64, 10)
 
     # 定义前置传播
@@ -65,8 +69,10 @@ class RNN(nn.Module):
         # h_n shape (n_layers, batch, hidden_size)
         # h_c shape (n_layers, batch, hidden_size)
 
-        # 定义RNN output    在这一步，每次都会加上上一步的理解    (h_n, h_c)：一个是支线，一个是主线    None：表示一个hidden_state有没有值
-        r_out, (h_n, h_c) = self.rnn(x, None)   #  x (batch, time_step, input_size):    有28个time_step 和 28个input_size，根据time_step和input_size计算得出每一步的理解
+        # 定义RNN output    在这一步，每次都会加上上一步的理解    (h_n, h_c)：一个是支线，一个是主线  None：表示第一个hidden_state有没有值
+        #  x (batch, time_step, input_size):    有28个time_step 和 28个input_size，根据time_step和input_size计算得出每一步的理解
+        # r_out 有28个输出，所有有28个
+        r_out, (h_n, h_c) = self.rnn(x, None)
 
         # r_out[]中有全部的每一层的理解，这里是选取最后的一个output
         out = self.out(r_out[:, -1, :])  # (batch, time_step, input)

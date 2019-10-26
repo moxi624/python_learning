@@ -13,6 +13,8 @@ y1 = torch.ones(100)                # 类型1 y data (tensor), shape=(100, 1)
 x = torch.cat((x0, x1), 0).type(torch.FloatTensor)  # FloatTensor = 32-bit floating
 y = torch.cat((y0, y1), ).type(torch.LongTensor)    # LongTensor = 64-bit integer
 
+# 放到Variable的篮子里
+x, y = Variable(x), Variable(y)
 
 # plt.scatter(x.data.numpy()[:, 0], x.data.numpy()[:, 1], c=y.data.numpy(), s=100, lw=0, cmap='RdYlGn')
 # plt.show()
@@ -29,18 +31,35 @@ class Net(torch.nn.Module):     # 继承 torch 的 Module
         x = self.out(x)                 # 输出值, 但是这个不是预测值, 预测值还需要再另外计算
         return x
 
-net = Net(n_feature=2, n_hidden=10, n_output=2) # 几个类别就几个 output
+# 两个输入特征，分别是 x轴 和 y轴， 最后需要输出两个特征，分别是0和1
+# 几个类别就几个 output
+# [0,1] 表示是1
+# [1,0] 表示是0
+net = Net(n_feature=2, n_hidden=10, n_output=2)
 
-print(net)  # net 的结构
+"""
+神经网络结构：
+Net(
+  (hidden): Linear(in_features=2, out_features=10, bias=True)
+  (out): Linear(in_features=10, out_features=2, bias=True)
+)
+"""
+print(net)
 
 # optimizer 是训练的工具
-optimizer = torch.optim.SGD(net.parameters(), lr=0.02)  # 传入 net 的所有参数, 学习率
+# 传入 net 的所有参数, 学习率
+optimizer = torch.optim.SGD(net.parameters(), lr=0.02)
+
 # 算误差的时候, 注意真实值!不是! one-hot 形式的, 而是1D Tensor, (batch,)
 # 但是预测值是2D tensor (batch, n_classes)
+# CrossEntropyLoss：交叉熵误差
 loss_func = torch.nn.CrossEntropyLoss()
+
 plt.ion()   # something about plotting
 
 for t in range(100):
+
+    # out输出的值，可能是 [-20, -0.12, 20] 这样的值，需要通过F.softmax(out)：进行输出
     out = net(x)     # 喂给 net 训练数据 x, 输出分析值
 
     loss = loss_func(out, y)     # 计算两者的误差

@@ -3,6 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.utils.data as Data
+# torchvision包含一些数据库
 import torchvision
 import matplotlib.pyplot as plt
 
@@ -12,7 +13,7 @@ import matplotlib.pyplot as plt
 EPOCH = 1               # train the training data n times, to save time, we just train 1 epoch
 BATCH_SIZE = 50
 LR = 0.001              # learning rate
-DOWNLOAD_MNIST = False
+DOWNLOAD_MNIST = False # 是否下载好
 
 
 # Mnist digits dataset
@@ -20,18 +21,19 @@ if not(os.path.exists('./mnist/')) or not os.listdir('./mnist/'):
     # not mnist dir or mnist is empyt dir
     DOWNLOAD_MNIST = True
 
+# 下载数据
 train_data = torchvision.datasets.MNIST(
     root='./mnist/',
     train=True,                                     # 这是训练数据
-    transform=torchvision.transforms.ToTensor(),    # 把原始的数据（numpy array），改变成tensor的格式。把0-255的值，压缩到0-1
+    transform=torchvision.transforms.ToTensor(),    # 把原始的数据（numpy array），改变成tensor的格式。把0-255的值，压缩到0-1，因为这个是只有一层，不是GRB的格式
     download=DOWNLOAD_MNIST,                        # 是否下载好了 minist数据
 )
 
 # 把示例图进行显示
 print(train_data.train_data.size())                 # (60000, 28, 28)
 print(train_data.train_labels.size())               # (60000)
-plt.imshow(train_data.train_data[0].numpy(), cmap='gray')
-plt.title('%i' % train_data.train_labels[0])
+plt.imshow(train_data.train_data[0].numpy(), cmap='gray') # 展示第一张图片
+plt.title('%i' % train_data.train_labels[0]) # 展示结果标签
 plt.show()
 
 # 使用DataLoader进行小批量数据训练，图像批处理形状是 (50, 1, 28, 28)
@@ -49,32 +51,34 @@ test_y = test_data.test_labels[:2000]
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        # 创建一个卷积神经网络
+
+        # 快速创建一个卷积神经网络
         self.conv1 = nn.Sequential(         # input shape (1, 28, 28)
             # 一个卷积神经网络通常包含三个部分： Conv2d：卷积层   ReLU：神经网络   MaxPool2d：池化层
 
-            # 卷积层，相当于信息过滤器，是一个三维的过滤器
+            # 卷积层，相当于信息过滤器，是一个三维的过滤器（有长宽高三个属性）
             nn.Conv2d(
-                in_channels=1,              # 输入层的高度
-                out_channels=16,            # 输出层的高度，相当于有16个特征，用于下一层处理
+                in_channels=1,              # 输入层的高度（因为是灰度图片，只有一层，如果是RGB图片，有三层）
+                out_channels=16,            # 输出层的高度，相当于有16个特征，用于下一层处理（16个滤波器同时扫描，会得出16个特征，高度为16）
                 kernel_size=5,              # filter的大小是 5*5的像素点
-                stride=1,                   # filter movement/step，跳跃的filter
-                padding=2,                  # if want same width and length of this image after Conv2d, padding=(kernel_size-1)/2 if stride=1  在周围围上一圈为0的数据。
+                stride=1,                   # filter movement/step，跳跃的filter,每隔多少步跳一步
+                padding=2,                  # 在周围围上一圈为0的数据。为了让过滤器能够完全扫描，需要在外面包裹一圈
 
             ),                              # output shape (16, 28, 28)
 
-            nn.ReLU(),                      # activation
+            nn.ReLU(),                      # activation   （16，28,28）
 
+            # output (16,14,14)
             nn.MaxPool2d(kernel_size=2),    # 选取这个区域中，最大的值（从两个中选取1个，所以减少了一半） choose max value in 2x2 area, output shape (16, 14, 14)
         )
 
         # 第二层卷积
         self.conv2 = nn.Sequential(         # input shape (16, 14, 14)
-            nn.Conv2d(16, 32, 5, 1, 2),     # output shape (32, 14, 14)
-            nn.ReLU(),                      # activation
+            nn.Conv2d(16, 32, 5, 1, 2),     # output shape (32, 14, 14) 输入16层 然后输出 32层
+            nn.ReLU(),                      # activation (32,14,14)
             nn.MaxPool2d(2),                # output shape (32, 7, 7)
         )
-        # 输出层   10个分类的东西
+        # 输出层   10个分类的东西, 展平数据
         self.out = nn.Linear(32 * 7 * 7, 10)   # fully connected layer, output 10 classes
 
     def forward(self, x):

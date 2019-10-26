@@ -1,4 +1,5 @@
 import torch
+
 # 这个data是用于小批量数据训练的模块
 import torch.utils.data as Data
 
@@ -15,6 +16,7 @@ y = torch.linspace(10, 1, 10)
 # 下面步骤是转换成 torch 能识别的 Dataset
 torch_dataset = Data.TensorDataset(x, y)
 
+# DataLoader是使得我们的数据变成小批的
 loader = Data.DataLoader(
     # 定义数据集
     dataset=torch_dataset,
@@ -25,7 +27,6 @@ loader = Data.DataLoader(
     # 表示使用两个线程进行提取
     num_workers=2,
 );
-
 
 def show_step():
     # 定义循环，让数据整训练三次

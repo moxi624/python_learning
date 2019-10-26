@@ -8,7 +8,7 @@ y = x.pow(2) + 0.2*torch.rand(x.size())  # noisy y data (tensor), shape=(100, 1)
 
 # 定义保存神经网络方法
 def save():
-    # 建网络
+    # 快速搭建一个回归神经网络
     net1 = torch.nn.Sequential(
         torch.nn.Linear(1, 10),
         torch.nn.ReLU(),
